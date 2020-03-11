@@ -1,56 +1,56 @@
 import pygame
 from collections import namedtuple
 
-interval = 100
+
+class Car:
+    x = 0
+    y = 0
+    cell_x = 0
+    cell_y = 0
+    time = 0
 
 
-def draw_town(surface, lens, size):
-    sq_size = [(surface.get_width() - interval * (size[0] + 1)) / size[0],
-               (surface.get_height() - interval * (size[1] + 1)) / size[1]]
-    for i in range(size[0]):
-        for j in range(size[1]):
-            rt_color = (30, 67, 120)
-            rt = pygame.Rect(((interval + sq_size[0]) * i + interval, (interval + sq_size[1]) * j + interval),
-                             (sq_size[0], sq_size[1]))
-            pygame.draw.rect(surface, rt_color, rt, 0)
-            pygame.display.update()
+class Cell:
+    x = 0
+    y = 0
+    rect = pygame.Rect((0, 0), (0, 0))
 
 
-def make_wave(surface, traffic_lights, lens, size):
-    sq_size = [(surface.get_width() - interval * (size[0] + 1)) / size[0],
-               (surface.get_height() - interval * (size[1] + 1)) / size[1]]
-    Car = namedtuple('Car',
-                     ['x',
-                      'y',
-                      'time_to_next',
-                      'direct',
-                      'surface'
-                      ]
-                     )
-    s = pygame.Surface((1, 1))
-    s.fill((255, 255, 255))
-    surface.blit(s, (interval / 2, interval / 2))
-    test_car = Car(0, 1, lens[0][1], 1, s)
-    cars = list()
-    cars.append(test_car)
+class Field:
+    interval = 50
+    squares_color = (135, 210, 0)
 
-    while len(cars) > 0:
-        for now in cars:
-            all_d = sq_size[(now.direct + 1) % 2] + interval
-            if now.direct == 0:
+    def create_town(self, field):
+        for i in range(self.count_of_squares_y):
+            self.field_coords.append(list())
+            for j in range(self.count_of_squares_x):
+                cell = Cell()
+                cell.x = i * (self.interval + self.squares_width)
+                cell.y = j * (self.interval + self.squares_height)
+                cell.rect = pygame.Rect((cell.x, cell.y), (self.squares_width, self.squares_height))
+                pygame.draw.rect(pygame.display.get_surface(), self.squares_color, cell.rect)
+                pygame.display.flip()
+                self.field_coords[i].append(cell)
 
-                surface.blit(test_car.surface, ())
+    def visualisation(self, field, traffic_lights):
+        self.create_town(field)
 
+    def __init__(self, field, traffic_lights):
 
-def visualisation(traffic_lights, lens, size):
-    pygame.init()
-    window = pygame.display.set_mode((1000, 1000))
-    bg_color = (255, 255, 200)
-    window.fill(bg_color)
-    pygame.display.update()
-    draw_town(window, lens, size)
-    make_wave(window, traffic_lights, lens, size)
-    while 1:
-        for i in pygame.event.get():
-            if i.type == pygame.QUIT:
-                exit()
+        self.field_coords = list()
+        self.count_of_squares_y = (len(field) + 1) // 2
+        self.count_of_squares_x = (len(field[0]) + 1) // 2
+
+        pygame.init()
+        pygame.display.set_mode((1000, 1000))
+        pygame.display.get_surface().fill((255, 255, 255))
+
+        self.squares_width = (pygame.display.get_surface().get_size()[0] - (
+                self.count_of_squares_x - 1) * self.interval) // self.count_of_squares_x
+        self.squares_height = (pygame.display.get_surface().get_size()[1] - (
+                self.count_of_squares_y - 1) * self.interval) // self.count_of_squares_y
+        self.visualisation(field, traffic_lights)
+        while 1:
+            for i in pygame.event.get():
+                if i.type == pygame.QUIT:
+                    exit("Goodbye")
