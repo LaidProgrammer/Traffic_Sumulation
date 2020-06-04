@@ -15,17 +15,18 @@ CAR_COLOR = (0, 255, 0)
 
 # system constants
 
-TIME_INTERVAL = 1000//FPS
+TIME_INTERVAL = 1000 // FPS
 VERTICAL = 0
 HORIZONTAL = 1
 SIZE_CAR = 10
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 
-#end of system constants
+
+# end of system constants
 
 class Car:
-    def __init__(self, x, y, cell_x, cell_y, direction):
+    def __init__(self, x=0, y=0, cell_x=0, cell_y=0, direction=VERTICAL):
         self.is_road_ended = False
         self.is_waiting = False
         self.current_time = 0
@@ -35,7 +36,7 @@ class Car:
         self.cell_y = cell_y
         self.direction = direction
         self.drawing_rect = pygame.Rect((self.x, self.y), (SIZE_CAR, SIZE_CAR))
-        
+
     def redraw(self):
         self.drawing_rect.left = self.x
         self.drawing_rect.top = self.y
@@ -46,9 +47,8 @@ class Car:
         self.redraw()
 
 
-
 class Cell:
-    def __init__(self, x : int, y : int, width : int, height : int):
+    def __init__(self, x: int = 0, y: int = 0, width: int = 100, height: int = 100):
         self.x = x
         self.y = y
         self.width = width
@@ -68,6 +68,7 @@ class Field:
                 pygame.draw.rect(self.window, SQUARES_COLOR, cell.drawing_rect)
                 pygame.display.flip()
                 self.field_coords[i].append(cell)
+
     def redraw_town(self):
         for i in self.field_coords:
             for j in i:
@@ -94,29 +95,30 @@ class Field:
             pygame.display.flip()
             self.cars.append(car)
 
-    def cell_coord_to_traffic_index(self, value : int):
+    def cell_coord_to_traffic_index(self, value: int):
         return (value - 1) // 2
 
-    def can_go_on_the_crossroad(self, car : Car):
+    def can_go_on_the_crossroad(self, car: Car):
         x = self.cell_coord_to_traffic_index(car.cell_x)
         y = self.cell_coord_to_traffic_index(car.cell_y)
         sum_time = self.traffic_lights[x][y][car.direction][1] + self.traffic_lights[x][y][car.direction][2]
         if car.current_time > 0 or self.traffic_lights[y][x][car.direction][0] > self.time:
             return True
-        if ((self.time - self.traffic_lights[x][y][car.direction][0]) % sum_time) > self.traffic_lights[x][y][car.direction][1]:
+        if ((self.time - self.traffic_lights[x][y][car.direction][0]) % sum_time) > \
+                self.traffic_lights[x][y][car.direction][1]:
             return False
         else:
             return True
 
-    def is_on_the_crossroad(self, car : Car):
+    def is_on_the_crossroad(self, car: Car):
         if car.cell_x % 2 == 0 or car.cell_y % 2 == 0:
             return False
         else:
             return True
 
-    def move_car(self, car : Car):
-        new_x : int = car.x
-        new_y : int = car.y
+    def move_car(self, car: Car):
+        new_x: int = car.x
+        new_y: int = car.y
         if car.cell_y % 2 == 0 or car.cell_x % 2 == 0:
             if car.direction == HORIZONTAL:
                 new_x = (car.cell_y // 2) * (INTERVAL + self.squares_width) + \
@@ -127,7 +129,7 @@ class Field:
         else:
             if car.direction == HORIZONTAL:
                 new_x = ((car.cell_y + 1) // 2) * self.squares_width + ((car.cell_y - 1) // 2) * INTERVAL + \
-                    (INTERVAL * car.current_time) // self.field[car.cell_x][car.cell_y]
+                        (INTERVAL * car.current_time) // self.field[car.cell_x][car.cell_y]
             else:
                 new_y = ((car.cell_x + 1) // 2) * self.squares_height + ((car.cell_x - 1) // 2) * INTERVAL + \
                         (INTERVAL * car.current_time) // self.field[car.cell_x][car.cell_y]
@@ -139,7 +141,7 @@ class Field:
                 car.cell_y += 1
             car.current_time = 0
 
-    def can_go(self, car : Car):
+    def can_go(self, car: Car):
         if (car.cell_x > (len(self.field) - 1)) or (car.cell_y > (len(self.field[0]) - 1)):
             return False
         else:
@@ -181,19 +183,15 @@ class Field:
         interval.set()
         while self.stop.is_set():
             while interval.is_set():
-                collision : bool = self.step()
+                collision: bool = self.step()
                 interval.wait(TIME_INTERVAL)
                 if self.end() or collision:
                     self.stop.clear()
                     interval.clear()
 
-
     def visualisation(self):
         self.create_town()
         self.set_start_positions()
-        self.time = 0
-        self.waiting_time = 0
-        self.stop = threading.Event()
         self.stop.set()
 
         steps = threading.Thread(target=self.cycle_of_steps, daemon=True)
@@ -205,13 +203,16 @@ class Field:
                     exit()
 
         if not self.collision:
-            messagebox.showinfo("Your wasting time", "All your wasting time is {:.2f} s!".format(self.waiting_time / FPS))
+            messagebox.showinfo("Your wasting time",
+                                "All your wasting time is {:.2f} s!".format(self.waiting_time / FPS))
         else:
-            messagebox.showerror("Error" ,"You have a collision!")
-
+            messagebox.showerror("Error", "You have a collision!")
 
     def __init__(self, field, traffic_lights):
 
+        self.stop = threading.Event()
+        self.waiting_time = 0
+        self.time = 0
         self.cars = list()
         self.field_coords = list()
         self.collision = False
