@@ -28,20 +28,19 @@ jobs:
           name: win
           path: win_dist/
   create-release:
-    runs-on: linux-latest
+    runs-on: ubuntu-latest
     needs: [build-windows]
     steps:
-      - name: Download windows artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: win
-      - name: Create archive from artifact
-        run: |
-          zip archive win_dist
+#      - name: Download windows artifact
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: win
+#      - name: Create archive from artifact
+#        run: |
+#          zip archive win_dist
       - name: Create Release
-        id: create_release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "win_dist.zip"
+          artifact: "win"
           body: "This is my release"
           token: ${{ secrets.GITHUB_TOKEN }}
