@@ -5,7 +5,7 @@ on:
     tags:
       'v*'
 jobs:
-  - build-windows:
+  build-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
@@ -28,7 +28,7 @@ jobs:
         with:
           name: win
           path: win_dist/
-  - create-release:
+  create-release:
     runs-on: linux-latest
     needs: [build-windows]
     steps:
@@ -46,5 +46,3 @@ jobs:
           artifacts: "win_dist.zip"
           body: "This is my release"
           token: ${{ secrets.GITHUB_TOKEN }}
-
-
