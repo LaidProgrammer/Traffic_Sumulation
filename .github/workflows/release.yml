@@ -1,55 +1,50 @@
 name: release
 
 on:
-  - push:
-      tags:
-        - 'v*'
+  push:
+    tags:
+      'v*'
 jobs:
-  - setup-windows:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Install Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-  - test-windows:
-    runs-on: windows-latest
-    needs: [setup-windows]
-    steps:
-    - name: tests
-      run: python -m unittest -v tests.py
   - build-windows:
-      runs-on: windows-latest
-      needs: [setup-windows, test-windows]
-      steps:
-        - name: make
-          run: pyinstaller main.py
-  - release:
-      runs-on: windows-latest
-      needs: [setup-windows, test-windows, build-windows]
-      steps:
-        - name: Create Release
-          id: create_release
-          uses: actions/create-release@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            tag_name: ${{ github.ref }}
-            release_name: Release ${{ github.ref }}
-            body:
-            draft: false
-            prerelease: false
-        - name: Upload Release Asset
-          uses: actions/upload-release-asset@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            with:
-              upload_url: ${{ steps.create_release.outputs.upload_url }}
-              asset_name: dist
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Tests
+        run: python -m unittest -v tests.py
+      - name: Build
+        run: |
+          pyinstaller main.py
+          ren dist win_dist
+      - name: Upload to artifact"
+        uses: actions/upload-artifact@v2
+        with:
+          name: win
+          path: win_dist/
+  - create-release:
+    runs-on: linux-latest
+    needs: [build-windows]
+    steps:
+      - name: Download windows artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: win
+      - name: Create archive from artifact
+        run: |
+          zip archive win_dist
+      - name: Create Release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "win_dist.zip"
+          body: "This is my release"
+          token: ${{ secrets.GITHUB_TOKEN }}
 
 
